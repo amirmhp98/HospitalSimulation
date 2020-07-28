@@ -1,4 +1,4 @@
-from service.simulationService.InitializationServiceImpl import InitializationServiceImpl
+from service.simulationService import SimulationFlowServiceImpl, InitializationServiceImpl
 
 
 class SimulationController:
@@ -19,6 +19,7 @@ class SimulationController:
         simulation_parameters = self.get_inputs()
         initializer = InitializationServiceImpl(simulation_parameters, self.number_of_patients)
         simulation_context = initializer.initialize_simulation()
+
         # TODO: steps 3 to 5
 
         pass

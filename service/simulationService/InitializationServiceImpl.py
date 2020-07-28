@@ -48,7 +48,7 @@ class InitializationServiceImpl:
         arrival_times.sort()
         matrix = [{} for _ in range(self.number_of_patients)]
         for index, arrival_time in enumerate(arrival_times):
-            patient = {'type': "corona" if randint(1, 10) == 1 else "normal", 'arrival_time': arrival_time,
+            patient = {'id': index, 'type': "corona" if randint(1, 10) == 1 else "normal", 'arrival_time': arrival_time,
                        'time_spent_in_system': -1, 'time_waited_in_queue': 0, 'leave_time': -1}
             matrix[index] = patient
 
