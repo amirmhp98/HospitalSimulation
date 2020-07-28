@@ -1,3 +1,5 @@
+from random import randint
+
 from model.dto.SimulationContext import SimulationContext
 from model.Hospital import Hospital
 from model.Worker import Receptionist, Doctor
@@ -15,22 +17,21 @@ class InitializationServiceImpl:
         self.number_of_patients = number_of_patients
 
     def initialize_simulation(self):
-        # todo pass needed params, signatures need to be changed
         hospital = self.initialize_hospital()
         matrix = self.initialize_matrix()
         context = SimulationContext(hospital, matrix, self.average_patience)
         return context
 
     def initialize_hospital(self):
-        # todo implement
-        receptionist_distribution = PoissonDistribution(self.reception_service_rate)
+        # TODO: check consistency with randomizationService
+        receptionist_distribution = PoissonDistribution(self.reception_service_rate)  # FIXME: check with randomizationService
         receptionist = Receptionist(receptionist_distribution)
 
         rooms = []
         for room_number in range(self.number_of_rooms):
             room_doctors = []
             for doctor_service_rate in self.doctors_service_rate[room_number]:
-                doctor_distribution = ExponentialDistribution(doctor_service_rate)
+                doctor_distribution = ExponentialDistribution(doctor_service_rate)  # FIXME: check with randomizationService
                 doctor = Doctor(doctor_distribution)
                 room_doctors.append(doctor)
 
@@ -41,5 +42,14 @@ class InitializationServiceImpl:
         return hospital
 
     def initialize_matrix(self):
-        # todo implement
-        return
+        # TODO: check consistency with randomizationService
+        patient_arrival_distribution = PoissonDistribution(self.patient_arrival_rate)
+        arrival_times = patient_arrival_distribution.get_arrival_times(count=self.number_of_patients)  # FIXME: check with randomizationService
+        arrival_times.sort()
+        matrix = [{} for _ in range(self.number_of_patients)]
+        for index, arrival_time in enumerate(arrival_times):
+            patient = {'type': "corona" if randint(1, 10) == 1 else "normal", 'arrival_time': arrival_time,
+                       'time_spent_in_system': -1, 'time_waited_in_queue': 0, 'leave_time': -1}
+            matrix[index] = patient
+
+        return matrix

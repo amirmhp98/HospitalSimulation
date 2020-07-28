@@ -11,7 +11,7 @@ class SimulationFlowServiceImpl:
         simulationFinished = False
         timer = 0
 
-        matrix = simulationContext.simulationMatrix
+        matrix = simulationContext.simulation_matrix
 
         while not simulationFinished:
             # todo implement
