@@ -1,2 +1,2 @@
 from .exponential_distribution import ExponentialDistribution
-from .poisson_destribution import PoissonDistribution
+from .poisson_distribution import PoissonDistribution

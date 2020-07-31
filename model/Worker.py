@@ -17,8 +17,7 @@ class Worker:
         get next 100 random numbers and store them in random bag
         currentIndex = 0
         """
-        # TODO: implement
-        # self.random_bag = self.distribution.generate_random_numbers(count=100)
+        self.random_bag = self.distribution.generate_random_numbers(count=100)
         pass
 
 
