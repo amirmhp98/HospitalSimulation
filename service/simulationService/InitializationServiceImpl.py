@@ -48,7 +48,7 @@ class InitializationServiceImpl:
         patient_arrival_distribution = PoissonDistribution(self.patient_arrival_rate)
         patient_arrival_distribution.generate_random_numbers(count=self.number_of_patients)
         arrival_times = patient_arrival_distribution.get_arrival_times(
-            init_time=0)  # FIXME: check with randomizationService
+            init_time=0)
         arrival_times.sort()
         matrix = [{} for _ in range(self.number_of_patients)]
         for index, arrival_time in enumerate(arrival_times):
