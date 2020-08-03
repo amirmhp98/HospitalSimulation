@@ -41,6 +41,7 @@ class Receptionist(Worker):
 class Doctor(Worker):
     def __init__(self, distribution):
         super(Doctor, self).__init__(distribution)
+        self.status = "free"  # or 'busy'
 
     def __lt__(self, other):
         if not isinstance(other, Worker):

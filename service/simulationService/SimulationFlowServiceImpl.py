@@ -1,3 +1,6 @@
+from model.Hospital import Hospital
+from model.Room import Room
+
 from queue import Queue
 from heapq import heapify, heappush, heappop
 
@@ -15,11 +18,12 @@ class SimulationFlowServiceImpl:
 
         simulationFinished = False
         matrix = simulation_context.simulation_matrix
+        hospital = simulation_context.hospital
         event_list = []
         reception_queue = Queue()  # this queue only holds the IDs of patients not the actual object
         self.initialize_event_list(simulation_context, event_list)
 
-        while not self.check_simulation_finish(event_list, matrix):
+        while not self.check_simulation_finish(matrix, reception_queue, simulation_context.hospital.rooms):
             # todo implement
             """
             while flow:
@@ -49,16 +53,30 @@ class SimulationFlowServiceImpl:
             current_event_list = self.build_current_event_list(event_list)  # step 1 done
             for time, event in current_event_list:  # step 2:
                 if isinstance(event, Receptionist):
-                    # TODO: implement step 2A
-                    pass
+                    # 2A
+                    self.handle_receptionist_event(event, event_list, hospital, matrix, reception_queue)
+
                 elif isinstance(event, Doctor):
                     # TODO: implement step 2B
                     pass
 
-        return matrix
+            self.record_queue_length(simulation_context, reception_queue.qsize())
+            # print("one step passed")
 
-    def check_simulation_finish(self, event_list, matrix):
-        if not event_list and self.current_patient_index == len(matrix):
+        print('done')
+
+    def handle_receptionist_event(self, event, event_list, hospital, matrix, reception_queue):
+        if reception_queue.qsize() > 0:
+            current_patient_id = reception_queue.get()
+            duration = event.get_next_random_duration()  # 2A.1
+            heappush(event_list, (self.timer + duration, event))  # 2A.2
+            self.assign_to_room(patient=matrix[current_patient_id], hospital=hospital)  # 2A.4
+            self.record_waiting_time_for_patient(matrix[current_patient_id])  # 2A.5
+        else:
+            heappush(event_list, (self.timer + 1, event))
+
+    def check_simulation_finish(self, matrix, reception_queue, rooms):
+        if self.current_patient_index == len(matrix) and not reception_queue.qsize() and self.rooms_are_idle(rooms):
             return True
         return False
 
@@ -66,10 +84,10 @@ class SimulationFlowServiceImpl:
         current_event_list = []
         while event_list and event_list[0][0] == self.timer:
             current_event_list.append(heappop(event_list))
-        return current_event_list
+        return current_event_list[::-1]  # so receptionist always come before doctors
 
     def insert_patients(self, reception_queue, matrix):
-        while matrix[self.current_patient_index]['arrival_time'] <= self.timer:
+        while self.current_patient_index < len(matrix) and matrix[self.current_patient_index]['arrival_time'] <= self.timer:
             reception_queue.put(self.current_patient_index)
             self.current_patient_index += 1
 
@@ -87,4 +105,29 @@ class SimulationFlowServiceImpl:
         else:
             timer = self.timer + 1
         return timer
+
+    def assign_to_room(self, patient, hospital: Hospital):
+        least_crowded_room = sorted(hospital.rooms,
+                                    key=lambda room: room.corona_queue.qsize()+room.normal_queue.qsize())[0]
+        if patient['type'] == 'corona':
+            least_crowded_room.corona_queue.put(patient)
+        else:
+            least_crowded_room.normal_queue.put(patient)
+
+    def record_queue_length(self, simulation_context: SimulationContext, current_reception_queue_length):
+        simulation_context.reception_queue_history[self.timer] = current_reception_queue_length
+        for index, room in enumerate(simulation_context.hospital.rooms):
+            simulation_context.rooms_queue_history[index][self.timer] = room.corona_queue.qsize() + room.normal_queue.qsize()
+
+    def record_waiting_time_for_patient(self, patient):
+        arrival_time = patient['arrival_time']
+        patient['time_waited_in_queue'] += self.timer - arrival_time
+
+    def rooms_are_idle(self, rooms):
+        for room in rooms:
+            for doctor in room.doctors:
+                if doctor.status == 'busy':
+                    return False
+        return True
+
 
