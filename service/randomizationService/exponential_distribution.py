@@ -6,4 +6,4 @@ class ExponentialDistribution:
         self.parameter = parameter
 
     def generate_random_numbers(self, count):
-        return np.random.exponential(scale=self.parameter, size=count)
+        return list(map(int, np.random.exponential(scale=self.parameter, size=count)))

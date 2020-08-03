@@ -8,7 +8,7 @@ class PoissonDistribution:
         self.parameter = parameter
 
     def generate_random_numbers(self, count):
-        self.random_numbers = poisson.rvs(mu=self.parameter, size=count)
+        self.random_numbers = list(poisson.rvs(mu=self.parameter, size=count))
         # self.random_numbers = sp.rand.poisson(lam=self.parameter, size=count)
 
         return self.random_numbers
