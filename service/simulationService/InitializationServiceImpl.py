@@ -25,7 +25,7 @@ class InitializationServiceImpl:
     def initialize_hospital(self):
         # TODO: check consistency with randomizationService
         receptionist_distribution = PoissonDistribution(
-            self.reception_service_rate)  # FIXME: check with randomizationService
+            self.reception_service_rate)
         receptionist = Receptionist(receptionist_distribution)
 
         rooms = []
@@ -33,11 +33,13 @@ class InitializationServiceImpl:
             room_doctors = []
             for doctor_service_rate in self.doctors_service_rate[room_number]:
                 doctor_distribution = ExponentialDistribution(
-                    doctor_service_rate)  # FIXME: check with randomizationService
+                    doctor_service_rate)
                 doctor = Doctor(doctor_distribution)
                 room_doctors.append(doctor)
 
             room = Room(room_doctors)
+            for doctor in room.doctors:
+                doctor.room = room
             rooms.append(room)
 
         hospital = Hospital(receptionist, rooms)
@@ -52,8 +54,8 @@ class InitializationServiceImpl:
         arrival_times.sort()
         matrix = [{} for _ in range(self.number_of_patients)]
         for index, arrival_time in enumerate(arrival_times):
-            patient = {'id': index, 'type': "corona" if randint(1, 10) == 1 else "normal", 'arrival_time': arrival_time,
-                       'time_spent_in_system': -1, 'time_waited_in_queue': 0, 'leave_time': -1}
+            patient = {'type': "corona" if randint(1, 10) == 1 else "normal", 'arrival_time': arrival_time,
+                       'time_spent_in_system': -1, 'time_waited_in_queue': 0, 'leave_time': -1, 'did_leave': False}
             matrix[index] = patient
 
         return matrix

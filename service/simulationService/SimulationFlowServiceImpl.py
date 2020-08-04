@@ -15,16 +15,14 @@ class SimulationFlowServiceImpl:
         self.current_patient_index = 0
 
     def run_simulation(self, simulation_context: SimulationContext):
-
-        simulationFinished = False
         matrix = simulation_context.simulation_matrix
         hospital = simulation_context.hospital
         event_list = []
         reception_queue = Queue()  # this queue only holds the IDs of patients not the actual object
         self.initialize_event_list(simulation_context, event_list)
 
+        next_report_time = 0
         while not self.check_simulation_finish(matrix, reception_queue, simulation_context.hospital.rooms):
-            # todo implement
             """
             while flow:
             1- go through event list while event.time == timer and make your own small *current* event list
@@ -48,6 +46,7 @@ class SimulationFlowServiceImpl:
                 3A- if it is empty, simulationFinished = true
                 3B- else set the timer to next soonest event
             """
+            next_report_time = self.progress_report(progress_report_interval=100000, next_report_time=next_report_time)
             self.timer = self.next_soonest_event(event_list=event_list)  # step 3 done
             self.insert_patients(reception_queue, matrix)
             current_event_list = self.build_current_event_list(event_list)  # step 1 done
@@ -57,13 +56,37 @@ class SimulationFlowServiceImpl:
                     self.handle_receptionist_event(event, event_list, hospital, matrix, reception_queue)
 
                 elif isinstance(event, Doctor):
-                    # TODO: implement step 2B
-                    pass
+                    # 2B
+                    self.handle_doctor_event(event, event_list, simulation_context)
 
             self.record_queue_length(simulation_context, reception_queue.qsize())
-            # print("one step passed")
 
         print('done')
+
+    def progress_report(self, progress_report_interval, next_report_time):
+        if self.current_patient_index > next_report_time:
+            next_report_time += progress_report_interval
+            print(f"progress_report: last_entered_patient:{self.current_patient_index}, "
+                  f"time:{self.timer}")
+        return next_report_time
+
+    def handle_doctor_event(self, event, event_list, simulation_context):
+        corona_queue = event.room.corona_queue
+        normal_queue = event.room.normal_queue
+        # print(corona_queue.qsize(), normal_queue.qsize())
+        patient = self.get_patient_from_queue(corona_queue, simulation_context.patience)
+        if not patient:
+            patient = self.get_patient_from_queue(normal_queue, simulation_context.patience)
+        if patient:
+            duration = event.get_next_random_duration()
+            event.status = 'busy'
+            heappush(event_list, (self.timer + duration, event))
+            patient['leave_time'] = self.timer + duration
+            patient['time_waited_in_queue'] = self.timer - patient['arrival_time']
+            patient['time_spent_in_system'] = patient['leave_time'] - patient['arrival_time']
+        else:
+            event.status = 'free'
+            heappush(event_list, (self.timer + 1, event))
 
     def handle_receptionist_event(self, event, event_list, hospital, matrix, reception_queue):
         if reception_queue.qsize() > 0:
@@ -74,6 +97,22 @@ class SimulationFlowServiceImpl:
             self.record_waiting_time_for_patient(matrix[current_patient_id])  # 2A.5
         else:
             heappush(event_list, (self.timer + 1, event))
+
+    def get_patient_from_queue(self, queue: Queue, patience):
+        if queue.qsize() > 0:
+            front_patient = queue.get()
+            if self.timer - front_patient['arrival_time'] > patience:
+                front_patient['leave_time'] = front_patient['arrival_time'] + patience
+                front_patient['time_waited_in_queue'] = patience
+                front_patient['time_spent_in_system'] = front_patient['leave_time'] - front_patient['arrival_time']
+                front_patient['did_leave'] = True
+                # print(f"patient left the system, patient={front_patient}")  # FIXME: remove
+
+                return self.get_patient_from_queue(queue, patience)
+            else:
+                return front_patient
+
+        return False
 
     def check_simulation_finish(self, matrix, reception_queue, rooms):
         if self.current_patient_index == len(matrix) and not reception_queue.qsize() and self.rooms_are_idle(rooms):

@@ -15,11 +15,14 @@ class SimulationController:
         4- introducing the results to analyzer
         5- showing the results
         """
+        print("input simulation data:")
         simulation_parameters = self.get_inputs()
+        print("initializing simulation...")
         initializer = InitializationServiceImpl(simulation_parameters, self.number_of_patients)
         simulation_context = initializer.initialize_simulation()
+        print("starting simulation...")
         simulator = SimulationFlowServiceImpl()
-        simulator.run_simulation(simulation_context)  # TODO: half of step 3
+        simulator.run_simulation(simulation_context)
         # TODO: steps 4 to 5
 
         pass
