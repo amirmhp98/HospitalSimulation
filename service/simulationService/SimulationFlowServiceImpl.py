@@ -19,7 +19,7 @@ class SimulationFlowServiceImpl:
         hospital = simulation_context.hospital
         event_list = []
         reception_queue = Queue()  # this queue only holds the IDs of patients not the actual object
-        self.initialize_event_list(simulation_context, event_list)
+        # self.initialize_event_list(simulation_context, event_list)
 
         next_report_time = 0
         while not self.check_simulation_finish(matrix, reception_queue, simulation_context.hospital.rooms):
@@ -47,13 +47,21 @@ class SimulationFlowServiceImpl:
                 3B- else set the timer to next soonest event
             """
             next_report_time = self.progress_report(progress_report_interval=100000, next_report_time=next_report_time)
-            self.timer = self.next_soonest_event(event_list=event_list)  # step 3 done
+            self.timer = self.next_soonest_event(event_list=event_list, matrix=matrix)  # step 3 done
             self.insert_patients(reception_queue, matrix)
             current_event_list = self.build_current_event_list(event_list)  # step 1 done
-            for time, event in current_event_list:  # step 2:
+            if hospital.receptionist.status == 'free':
+                self.handle_receptionist_event(hospital.receptionist, event_list, hospital, matrix, reception_queue, simulation_context.patience)
+            for room in hospital.rooms:
+                if room.normal_queue.qsize() + room.corona_queue.qsize() > 0:
+                    for doctor in room.doctors:
+                        if doctor.status == 'free':
+                            current_event_list.append((0, doctor))
+            # print('hi')
+            for _, event in current_event_list:  # step 2:
                 if isinstance(event, Receptionist):
                     # 2A
-                    self.handle_receptionist_event(event, event_list, hospital, matrix, reception_queue)
+                    self.handle_receptionist_event(event, event_list, hospital, matrix, reception_queue, simulation_context.patience)
 
                 elif isinstance(event, Doctor):
                     # 2B
@@ -86,17 +94,22 @@ class SimulationFlowServiceImpl:
             patient['time_spent_in_system'] = patient['leave_time'] - patient['arrival_time']
         else:
             event.status = 'free'
-            heappush(event_list, (self.timer + 1, event))
+            # heappush(event_list, (self.timer + 1, event))
 
-    def handle_receptionist_event(self, event, event_list, hospital, matrix, reception_queue):
+    def handle_receptionist_event(self, event, event_list, hospital, matrix, reception_queue, patience):
         if reception_queue.qsize() > 0:
-            current_patient_id = reception_queue.get()
-            duration = event.get_next_random_duration()  # 2A.1
-            heappush(event_list, (self.timer + duration, event))  # 2A.2
-            self.assign_to_room(patient=matrix[current_patient_id], hospital=hospital)  # 2A.4
-            self.record_waiting_time_for_patient(matrix[current_patient_id])  # 2A.5
+            current_patient = self.get_patient_from_queue(reception_queue, patience)
+            if current_patient:
+                event.status = 'busy'
+                duration = event.get_next_random_duration()  # 2A.1
+                heappush(event_list, (self.timer + duration, event))  # 2A.2
+                self.assign_to_room(patient=current_patient, hospital=hospital)  # 2A.4
+                self.record_waiting_time_for_patient(current_patient)  # 2A.5
+            else:
+                event.status = 'free'
         else:
-            heappush(event_list, (self.timer + 1, event))
+            event.status = 'free'
+            # heappush(event_list, (self.timer + 1, event))
 
     def get_patient_from_queue(self, queue: Queue, patience):
         if queue.qsize() > 0:
@@ -127,7 +140,7 @@ class SimulationFlowServiceImpl:
 
     def insert_patients(self, reception_queue, matrix):
         while self.current_patient_index < len(matrix) and matrix[self.current_patient_index]['arrival_time'] <= self.timer:
-            reception_queue.put(self.current_patient_index)
+            reception_queue.put(matrix[self.current_patient_index])
             self.current_patient_index += 1
 
     def initialize_event_list(self, simulation_context, event_list):
@@ -138,11 +151,11 @@ class SimulationFlowServiceImpl:
             for doctor in room.doctors:
                 heappush(event_list, (0, doctor))
 
-    def next_soonest_event(self, event_list):
+    def next_soonest_event(self, event_list, matrix):
         if event_list:
             timer = event_list[0][0]
         else:
-            timer = self.timer + 1
+            timer = matrix[self.current_patient_index]['arrival_time']
         return timer
 
     def assign_to_room(self, patient, hospital: Hospital):

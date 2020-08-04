@@ -5,6 +5,7 @@ class Worker:
     def __init__(self, distribution):
         self.distribution = distribution
         self.random_bag = []
+        self.status = "free"  # or 'busy'
 
     def get_next_random_duration(self):
         """
@@ -41,7 +42,7 @@ class Receptionist(Worker):
 class Doctor(Worker):
     def __init__(self, distribution):
         super(Doctor, self).__init__(distribution)
-        self.status = "free"  # or 'busy'
+        # self.status = "free"  # or 'busy'
         self.room = None
 
     def __lt__(self, other):
