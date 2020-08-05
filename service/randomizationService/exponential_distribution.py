@@ -1,6 +1,7 @@
 import numpy as np
 from math import ceil
 
+
 class ExponentialDistribution:
     def __init__(self, parameter):
         self.parameter = parameter

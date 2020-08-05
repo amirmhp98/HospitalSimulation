@@ -1,3 +1,4 @@
+from service.analyzeService.AnalyzeServiceImpl import AnalyzeServiceImpl
 from service.simulationService import SimulationFlowServiceImpl, InitializationServiceImpl
 
 
@@ -22,7 +23,10 @@ class SimulationController:
         simulation_context = initializer.initialize_simulation()
         print("starting simulation...")
         simulator = SimulationFlowServiceImpl()
-        simulator.run_simulation(simulation_context)
+        simulated_context = simulator.run_simulation(simulation_context)
+        print("starting analyze simulation...")
+        analyser = AnalyzeServiceImpl(simulated_context)
+        analyser.run()
         # TODO: steps 4 to 5
 
         pass

@@ -51,7 +51,8 @@ class SimulationFlowServiceImpl:
             self.insert_patients(reception_queue, matrix)
             current_event_list = self.build_current_event_list(event_list)  # step 1 done
             if hospital.receptionist.status == 'free':
-                self.handle_receptionist_event(hospital.receptionist, event_list, hospital, matrix, reception_queue, simulation_context.patience)
+                self.handle_receptionist_event(hospital.receptionist, event_list, hospital, matrix, reception_queue,
+                                               simulation_context.patience)
             for room in hospital.rooms:
                 if room.normal_queue.qsize() + room.corona_queue.qsize() > 0:
                     for doctor in room.doctors:
@@ -61,7 +62,8 @@ class SimulationFlowServiceImpl:
             for _, event in current_event_list:  # step 2:
                 if isinstance(event, Receptionist):
                     # 2A
-                    self.handle_receptionist_event(event, event_list, hospital, matrix, reception_queue, simulation_context.patience)
+                    self.handle_receptionist_event(event, event_list, hospital, matrix, reception_queue,
+                                                   simulation_context.patience)
 
                 elif isinstance(event, Doctor):
                     # 2B
@@ -70,6 +72,7 @@ class SimulationFlowServiceImpl:
             self.record_queue_length(simulation_context, reception_queue.qsize())
 
         print('done')
+        return simulation_context
 
     def progress_report(self, progress_report_interval, next_report_time):
         if self.current_patient_index > next_report_time:
@@ -139,7 +142,8 @@ class SimulationFlowServiceImpl:
         return current_event_list[::-1]  # so receptionist always come before doctors
 
     def insert_patients(self, reception_queue, matrix):
-        while self.current_patient_index < len(matrix) and matrix[self.current_patient_index]['arrival_time'] <= self.timer:
+        while self.current_patient_index < len(matrix) and matrix[self.current_patient_index][
+            'arrival_time'] <= self.timer:
             reception_queue.put(matrix[self.current_patient_index])
             self.current_patient_index += 1
 
@@ -160,7 +164,7 @@ class SimulationFlowServiceImpl:
 
     def assign_to_room(self, patient, hospital: Hospital):
         least_crowded_room = sorted(hospital.rooms,
-                                    key=lambda room: room.corona_queue.qsize()+room.normal_queue.qsize())[0]
+                                    key=lambda room: room.corona_queue.qsize() + room.normal_queue.qsize())[0]
         if patient['type'] == 'corona':
             least_crowded_room.corona_queue.put(patient)
         else:
@@ -169,7 +173,8 @@ class SimulationFlowServiceImpl:
     def record_queue_length(self, simulation_context: SimulationContext, current_reception_queue_length):
         simulation_context.reception_queue_history[self.timer] = current_reception_queue_length
         for index, room in enumerate(simulation_context.hospital.rooms):
-            simulation_context.rooms_queue_history[index][self.timer] = room.corona_queue.qsize() + room.normal_queue.qsize()
+            simulation_context.rooms_queue_history[index][
+                self.timer] = room.corona_queue.qsize() + room.normal_queue.qsize()
 
     def record_waiting_time_for_patient(self, patient):
         arrival_time = patient['arrival_time']
@@ -181,5 +186,3 @@ class SimulationFlowServiceImpl:
                 if doctor.status == 'busy':
                     return False
         return True
-
-
