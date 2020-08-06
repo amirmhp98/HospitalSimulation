@@ -41,11 +41,12 @@ class AnalyzeServiceImpl:
 
     def calculate_average_time(self, patient_type='all', req='time_spent_in_system'):
         if patient_type == 'corona':
-            return sum([patient[req] for patient in self.simulation_matrix if patient['type'] == 'corona']) / len(
-                self.simulation_matrix)
+            corona_queue = [patient[req] for patient in self.simulation_matrix if patient['type'] == 'corona']
+
+            return sum(corona_queue)/len(corona_queue)
         elif patient_type == 'normal':
-            return sum([patient[req] for patient in self.simulation_matrix if patient['type'] == 'normal']) / len(
-                self.simulation_matrix)
+            normal_queue = [patient[req] for patient in self.simulation_matrix if patient['type'] == 'normal']
+            return sum(normal_queue)/len(normal_queue)
         else:
             return sum([patient[req] for patient in self.simulation_matrix]) / len(self.simulation_matrix)
 
@@ -72,7 +73,7 @@ class AnalyzeServiceImpl:
             new_simulation_parameters = self.simulation_parameters[0], self.simulation_parameters[1], \
                                         self.simulation_parameters[2], self.simulation_parameters[3], \
                                         new_doctor_service_rate
-            initializer = InitializationServiceImpl(new_simulation_parameters, number_of_patients=10000)
+            initializer = InitializationServiceImpl(new_simulation_parameters, number_of_patients=100000)
             simulation_context = initializer.initialize_simulation()
             simulator = SimulationFlowServiceImpl()
             simulated_context = simulator.run_simulation(simulation_context)
