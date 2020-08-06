@@ -71,7 +71,6 @@ class SimulationFlowServiceImpl:
 
             self.record_queue_length(simulation_context, reception_queue.qsize())
 
-        print('done')
         return simulation_context
 
     def progress_report(self, progress_report_interval, next_report_time):
