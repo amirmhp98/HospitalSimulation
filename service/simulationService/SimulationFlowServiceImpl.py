@@ -70,7 +70,6 @@ class SimulationFlowServiceImpl:
                     self.handle_doctor_event(event, event_list, simulation_context)
 
             self.record_queue_length(simulation_context, reception_queue.qsize())
-
         return simulation_context
 
     def progress_report(self, progress_report_interval, next_report_time):

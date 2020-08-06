@@ -1,5 +1,7 @@
 from numpy import var
 from math import ceil, sqrt
+
+from service.analyzeService.VisualAnalyzerService import VisualAnalyzerService
 from service.simulationService.SimulationFlowServiceImpl import SimulationFlowServiceImpl
 from service.simulationService.InitializationServiceImpl import InitializationServiceImpl
 
@@ -38,6 +40,9 @@ class AnalyzeServiceImpl:
         print(f"average_second_room_queue_length = {average_second_room_queue_length}")
         # self.calculate_simulation_precision()
         self.find_best_doctor_service_time()
+        print("plotting diagrams...")
+        visualAnalyzer = VisualAnalyzerService(self.simulation_matrix)
+        visualAnalyzer.plot_diagrams()
 
     def calculate_average_time(self, patient_type='all', req='time_spent_in_system'):
         if patient_type == 'corona':
