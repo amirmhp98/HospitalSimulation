@@ -23,7 +23,6 @@ class InitializationServiceImpl:
         return context
 
     def initialize_hospital(self):
-        # TODO: check consistency with randomizationService
         receptionist_distribution = PoissonDistribution(
             self.reception_service_rate)
         receptionist = Receptionist(receptionist_distribution)
@@ -46,7 +45,6 @@ class InitializationServiceImpl:
         return hospital
 
     def initialize_matrix(self):
-        # TODO: check consistency with randomizationService
         patient_arrival_distribution = PoissonDistribution(self.patient_arrival_rate)
         patient_arrival_distribution.generate_random_numbers(count=self.number_of_patients)
         arrival_times = patient_arrival_distribution.get_arrival_times(
