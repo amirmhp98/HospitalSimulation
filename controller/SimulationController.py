@@ -27,8 +27,6 @@ class SimulationController:
         print("starting analyze simulation...")
         analyser = AnalyzeServiceImpl(simulated_context, self.number_of_patients, simulation_parameters)
         analyser.run()
-        # TODO: steps 4 to 5
-
         pass
 
     @staticmethod
